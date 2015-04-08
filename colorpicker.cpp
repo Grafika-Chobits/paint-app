@@ -387,6 +387,26 @@ void plotLine(Frame* frm, int x0, int y0, int x1, int y1, RGB lineColor)
 	}
 }
 
+int isColorEqual(RGB color1, RGB color2){
+	if (color1.r == color2.r && color1.g == color2.g && color1.b == color2.b){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
+void colorFlood(Frame* frm,int x, int y,RGB color){
+	if (isColorEqual(frm->px[x][y],color) == 1){
+		//do nothing
+	}else{
+		insertPixel(frm,coord(x,y),color);
+		colorFlood(frm,x+1,y,color);
+		colorFlood(frm,x,y+1,color);
+		colorFlood(frm,x-1,y,color);
+		colorFlood(frm,x,y-1,color);
+	}
+}
+
 void addBlob(Frame* cnvs, Coord loc, RGB color) {
 	int x,y;
 	for (y=-2; y<3;y++) {
@@ -428,6 +448,8 @@ void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX,
 		plotLine(canvas, initialPosition.x, initialPosition.y, currentPosition.x, initialPosition.y, color);
 		plotLine(canvas, currentPosition.x, initialPosition.y, currentPosition.x, currentPosition.y, color);
 		plotLine(canvas, initialPosition.x, currentPosition.y, currentPosition.x, currentPosition.y, color);
+		
+		//colorFlood(canvas, (currentPosition.x - initialPosition.x) / 2, (currentPosition.y - initialPosition.y) / 2, color);
 	}
 }
 
