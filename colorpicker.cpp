@@ -26,7 +26,7 @@
 #include <iostream>
 
 /* SETTINGS ------------------------------------------------------------ */
-#define screenXstart 250
+#define screenXstart 0
 #define screenX 1366
 #define screenY 700
 #define mouseSensitivity 1
@@ -422,7 +422,7 @@ void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX,
 	if(!mouseState && !isReleased){
 		isReleased = 1;
 		currentPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
-		printf("released\n");
+
 		// draw square lines
 		plotLine(canvas, initialPosition.x, initialPosition.y, initialPosition.x, currentPosition.y, color);
 		plotLine(canvas, initialPosition.x, initialPosition.y, currentPosition.x, initialPosition.y, color);
@@ -619,12 +619,12 @@ int main() {
 			}
 			
 			//in canvas
-			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+			/*if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
 				trigonoLen = sqrt((float)pow(mouseRaw[1],2)+(float)pow(mouseRaw[2],2));
 				for (i=0; i<=trigonoLen; i++) {
 					addBlob(&canvas, coord(getCursorCoord(&mouse).x-580-(mouseRaw[1]*i/trigonoLen), getCursorCoord(&mouse).y-120+(mouseRaw[2]*i/trigonoLen)), colorValue);
 				}
-			}
+			}*/
 		}		
 		
 		
