@@ -24,9 +24,11 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <pthread.h>
+#include <termios.h>
 
 /* SETTINGS ------------------------------------------------------------ */
-#define screenXstart 250
+#define screenXstart 0
 #define screenX 1366
 #define screenY 700
 #define mouseSensitivity 1
@@ -421,29 +423,25 @@ void addBlob(Frame* cnvs, Coord loc, RGB color) {
 void drawLine(Frame* canvas, Coord mousePosition, int originX, int originY, RGB color, RGB canvasColor){
 	static Coord initialPosition;
 	static int isInitiated = 0;
-	static int secondClick = 0;
+	static int secondClick = 1;
 	Coord currentPosition;
 	int x, y;
 	
-	
-	if(isInitiated && !secondClick ){
+	if(isInitiated && !secondClick){
 		currentPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
 		isInitiated = 0;
 		secondClick = 1;
 		
 		// draw line
 		plotLine(canvas, initialPosition.x, initialPosition.y, currentPosition.x, currentPosition.y, color);
-		printf("2ndclick");
+	}else{
+		if(!isInitiated && secondClick){
+			initialPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+			isInitiated = 1;
+			secondClick = 0;
+		}
 	}
-
-	if(!isInitiated && secondClick){
-		initialPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
-		isInitiated = 1;
-		secondClick = 0;
-		printf("1stclick");
-	}
-	
-	}
+}
 	
 void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX, int originY, RGB color, RGB canvasColor){
 	static Coord initialPosition;
@@ -542,6 +540,48 @@ void showFrame (Frame* frm, FrameBuffer* fb) {
 	}
 }
 
+/* GLOBALVAR DECLARATIONS ----------------------------------------------- */
+static struct termios old, new1;
+void initTermios(int echo) {
+    tcgetattr(0, &old); /* grab old terminal i/o settings */
+    new1 = old; /* make new settings same as old settings */
+    new1.c_lflag &= ~ICANON; /* disable buffered i/o */
+    new1.c_lflag &= echo ? ECHO : ~ECHO; /* set echo mode */
+    tcsetattr(0, TCSANOW, &new1); /* use these new terminal i/o settings now */
+}
+
+/* Restore old terminal i/o settings */
+void resetTermios(void) {
+    tcsetattr(0, TCSANOW, &old);
+}
+
+int tool = 1;
+	
+void *threadFuncKeyboard(void *arg)
+{
+	char c;
+    initTermios(0);    
+	
+    while(1){
+		read(0, &c, 1); 
+		if(c == 49){
+			tool = 1;
+		}
+		
+		if(c == 50){
+			tool = 2;
+		}
+		
+		if(c == 51){
+			tool = 3;
+		}		
+    }
+
+    resetTermios();
+    
+	return NULL;
+}
+
 /* MAIN FUNCTION ------------------------------------------------------- */
 int main() {	
 	/* Preparations ---------------------------------------------------- */
@@ -607,6 +647,9 @@ int main() {
 	float trigonoLen;
 	int i; //for drawing.
 	
+	pthread_t pth_keyboard;
+	pthread_create(&pth_keyboard,NULL,threadFuncKeyboard,NULL);
+	
 	/* Main Loop ------------------------------------------------------- */
 	while (loop) {
 		//calc color value
@@ -627,20 +670,41 @@ int main() {
 		//show canvas
 		showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
 		
-		if((mouseRaw[0]&1)){
-			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
-				flushFrame(&drawingCanvas, rgb(255,255,255,0));
-				drawSquare(&drawingCanvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
-				//drawLine(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), 580, 120, colorValue, rgb(255,255,255,255));				
-				showCanvas(&cFrame, &drawingCanvas, 487, 500, coord(580,120));
-				//showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
-
-			}
-		}else{
-			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
-				drawSquare(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
-				showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
-			}
+		switch(tool){
+			case 1:
+				if((mouseRaw[0]&1)){
+					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+						drawLine(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), 580, 120, colorValue, rgb(255,255,255,255));				
+						showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
+					}
+				}
+				break;
+			
+			case 2:
+				if((mouseRaw[0]&1)){
+					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+						flushFrame(&drawingCanvas, rgb(255,255,255,0));
+						drawSquare(&drawingCanvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));		
+						showCanvas(&cFrame, &drawingCanvas, 487, 500, coord(580,120));
+					}
+				}else{
+					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+						drawSquare(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
+						showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
+					}
+				}
+				break;
+				
+			case 3:
+				if((mouseRaw[0]&1)){
+					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+						trigonoLen = sqrt((float)pow(mouseRaw[1],2)+(float)pow(mouseRaw[2],2));
+						for (i=0; i<=trigonoLen; i++) {
+							addBlob(&canvas, coord(getCursorCoord(&mouse).x-580-(mouseRaw[1]*i/trigonoLen), getCursorCoord(&mouse).y-120+(mouseRaw[2]*i/trigonoLen)), colorValue);
+						}
+					}
+				}
+				break;
 		}
 		
 		//fill mouse LAST
@@ -669,26 +733,15 @@ int main() {
 				lum = getCursorCoord(&mouse).x-299;
 				printf("r: %d, g: %d, b: %d\n", colorValue.r, colorValue.g, colorValue.b);
 			}
-			
-			//in canvas
-			/*if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
-				trigonoLen = sqrt((float)pow(mouseRaw[1],2)+(float)pow(mouseRaw[2],2));
-				for (i=0; i<=trigonoLen; i++) {
-					addBlob(&canvas, coord(getCursorCoord(&mouse).x-580-(mouseRaw[1]*i/trigonoLen), getCursorCoord(&mouse).y-120+(mouseRaw[2]*i/trigonoLen)), colorValue);
-				}
-			}*/
 		}		
-		
-		
-		
-		
 	}
 
 	/* Cleanup --------------------------------------------------------- */
+	pthread_join(pth_keyboard,NULL);
 	munmap(fb.ptr, sInfo.smem_len);
 	close(fbFile);
 	fclose(fmouse);
-	//resetTermios();
+	
 	return 0;
 }
 
