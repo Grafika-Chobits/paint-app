@@ -479,12 +479,12 @@ void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX,
 	}
 }
 
-void drawPolygon(Frame* canvas, vector<Coord> vertex, RGB color) {
+void drawPolygon(Frame* canvas, vector<Coord> vertex, int originX, int originY, RGB color) {
 	for(int i=0;i<vertex.size();++i) {
 		if(i==(vertex.size()-1))
-			plotLine(canvas, vertex.at(i).x-580, vertex.at(i).y-120, vertex.at(0).x-580, vertex.at(0).y-120, color);	
+			plotLine(canvas, vertex.at(i).x-originX, vertex.at(i).y-originY, vertex.at(0).x-originX, vertex.at(0).y-originY, color);	
 		else
-			plotLine(canvas, vertex.at(i).x-580, vertex.at(i).y-120, vertex.at(i+1).x-580, vertex.at(i+1).y-120, color);	
+			plotLine(canvas, vertex.at(i).x-originX, vertex.at(i).y-originY, vertex.at(i+1).x-originX, vertex.at(i+1).y-originY, color);	
 	}
 }
 
@@ -565,7 +565,7 @@ void resetTermios(void) {
     tcsetattr(0, TCSANOW, &old);
 }
 
-int tool = 1;
+int tool = 3;
 	
 void *threadFuncKeyboard(void *arg)
 {
@@ -713,10 +713,15 @@ int main() {
 							polygonVertex.push_back(getCursorCoord(&mouse));
 						}
 					}
-					
+					if(polygonVertex.size()>2) {
+						flushFrame(&drawingCanvas, rgb(255,255,255,0));
+						drawPolygon(&drawingCanvas, polygonVertex, 580, 120, colorValue);
+						showCanvas(&cFrame, &drawingCanvas, 487, 500, coord(580,120));	
+					}
+
 					if(mouseRaw[0]&2) {
 						polygonVertex.push_back(getCursorCoord(&mouse));
-						drawPolygon(&canvas, polygonVertex, colorValue);
+						drawPolygon(&canvas, polygonVertex, 580, 120, colorValue);
 						showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));	
 						polygonVertex.clear();
 					}
