@@ -26,7 +26,7 @@
 #include <iostream>
 
 /* SETTINGS ------------------------------------------------------------ */
-#define screenXstart 0
+#define screenXstart 250
 #define screenX 1366
 #define screenY 700
 #define mouseSensitivity 1
