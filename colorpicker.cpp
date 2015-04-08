@@ -20,11 +20,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <iostream>
 
 /* SETTINGS ------------------------------------------------------------ */
 #define screenXstart 250
 #define screenX 1366
-#define screenY 500
+#define screenY 700
 #define mouseSensitivity 1
 
 /* TYPEDEFS ------------------------------------------------------------ */
@@ -34,11 +38,12 @@ typedef struct s_rgb {
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
+	unsigned char a;
 } RGB;
 
 //Frame of RGBs
 typedef struct s_frame {
-	RGB px[screenX][screenY];
+	RGB **px;
 } Frame;
 
 //Coordinate System
@@ -55,6 +60,17 @@ typedef struct s_frameBuffer {
 	int bpp;
 } FrameBuffer;
 
+void createPixelsArray(Frame *frm){
+	RGB **px;
+	px = (RGB **) malloc(sizeof(RGB *) * screenX);
+	
+	int i;
+	for(i = 0; i < 1366; i++){
+		px[i] = (RGB *) malloc(sizeof(RGB) * screenY);
+	}
+	
+	frm->px = px;
+}
 
 
 /* MATH STUFF ---------------------------------------------------------- */
@@ -116,11 +132,12 @@ Coord getCursorCoord(Coord* mc) {
 /* VIDEO OPERATIONS ---------------------------------------------------- */
 
 // construct RGB
-RGB rgb(unsigned char r, unsigned char g, unsigned char b) {
+RGB rgb(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
 	RGB retval;
 	retval.r = r;
 	retval.g = g;
 	retval.b = b;
+	retval.a = a;
 	return retval;
 }
 
@@ -131,6 +148,7 @@ void insertPixel(Frame* frm, Coord loc, RGB col) {
 		frm->px[loc.x][loc.y].r = col.r;
 		frm->px[loc.x][loc.y].g = col.g;
 		frm->px[loc.x][loc.y].b = col.b;
+		frm->px[loc.x][loc.y].a = col.a;
 	}
 }
 
@@ -138,22 +156,22 @@ void insertPixel(Frame* frm, Coord loc, RGB col) {
 void insertSprite(Frame* frm, Coord loc, unsigned short type) {
 	switch (type) {
 		case 1 : { // the mouse sprite
-			insertPixel(frm, loc, rgb(255,255,255));
+			insertPixel(frm, loc, rgb(255,255,255,255));
 			int i;
 			for (i=5; i<10; i++) {
-				insertPixel(frm, coord(loc.x-i, loc.y), rgb(0,0,0));
-				insertPixel(frm, coord(loc.x+i, loc.y), rgb(0,0,0));
-				insertPixel(frm, coord(loc.x, loc.y-i), rgb(0,0,0));
-				insertPixel(frm, coord(loc.x, loc.y+i), rgb(0,0,0));
+				insertPixel(frm, coord(loc.x-i, loc.y), rgb(0,0,0,255));
+				insertPixel(frm, coord(loc.x+i, loc.y), rgb(0,0,0,255));
+				insertPixel(frm, coord(loc.x, loc.y-i), rgb(0,0,0,255));
+				insertPixel(frm, coord(loc.x, loc.y+i), rgb(0,0,0,255));
 				
-				insertPixel(frm, coord(loc.x-i, loc.y+1), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x-i, loc.y-1), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x+i, loc.y+1), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x+i, loc.y-1), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x+1, loc.y-i), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x-1, loc.y-i), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x+1, loc.y+i), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x-1, loc.y+i), rgb(255,255,255));
+				insertPixel(frm, coord(loc.x-i, loc.y+1), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x-i, loc.y-1), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x+i, loc.y+1), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x+i, loc.y-1), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x+1, loc.y-i), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x-1, loc.y-i), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x+1, loc.y+i), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x-1, loc.y+i), rgb(255,255,255,255));
 			}
 		} break;
 		case 2 : { // something?
@@ -168,55 +186,55 @@ void showHueSelector(Frame* frm, Coord loc, unsigned short hueLoc) {
 	int x,y;
 	for ( y = 5; y < 45; y++ ) {
 		for ( x = 0; x < 128; x++ ) {
-			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(255,2*x,0));
+			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(255,2*x,0,255));
 		}
 		for ( x = 128; x < 256; x++ ) {
-			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(255-(2*x),255,0));
+			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(255-(2*x),255,0,255));
 		}
 		for ( x = 256; x < 384; x++ ) {
-			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(0,255,2*x));
+			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(0,255,2*x,255));
 		}
 		for ( x = 384; x < 512; x++ ) {
-			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(0,255-(2*x),255));
+			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(0,255-(2*x),255,255));
 		}
 		for ( x = 512; x < 640; x++ ) {
-			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(2*x,0,255));
+			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(2*x,0,255,255));
 		}
 		for ( x = 640; x < 768; x++ ) {
-			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(255,0,255-(2*x)));
+			insertPixel(frm, coord(loc.x+x, loc.y+y), rgb(255,0,255-(2*x),255));
 		}
 	}
 	
 	//show border
 	for (y=5; y<45; y++) {
-		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255));
-		insertPixel(frm, coord(loc.x+768, loc.y+y), rgb(255,255,255));
+		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255,255));
+		insertPixel(frm, coord(loc.x+768, loc.y+y), rgb(255,255,255,255));
 	}
 	for (x=0; x<768; x++) {
-		insertPixel(frm, coord(loc.x+x, loc.y+4), rgb(255,255,255));
-		insertPixel(frm, coord(loc.x+x, loc.y+45), rgb(255,255,255));
+		insertPixel(frm, coord(loc.x+x, loc.y+4), rgb(255,255,255,255));
+		insertPixel(frm, coord(loc.x+x, loc.y+45), rgb(255,255,255,255));
 	}
 	
 	//show selected hue
 	for (y=0; y<5;y++) {
-		insertPixel(frm, coord(loc.x+hueLoc, loc.y+y), rgb(255,255,255));
+		insertPixel(frm, coord(loc.x+hueLoc, loc.y+y), rgb(255,255,255,255));
 		for (x=0; x<5-y; x++) {
-			insertPixel(frm, coord(loc.x+hueLoc-x, loc.y+y), rgb(255,255,255));
-			insertPixel(frm, coord(loc.x+hueLoc+x, loc.y+y), rgb(255,255,255));
+			insertPixel(frm, coord(loc.x+hueLoc-x, loc.y+y), rgb(255,255,255,255));
+			insertPixel(frm, coord(loc.x+hueLoc+x, loc.y+y), rgb(255,255,255,255));
 		}
 	}
 	for (y=5; y<15;y++) {
-		insertPixel(frm, coord(loc.x+hueLoc, loc.y+y), rgb(0,0,0));
+		insertPixel(frm, coord(loc.x+hueLoc, loc.y+y), rgb(0,0,0,255));
 	}
 	for (y=45; y<50;y++) {
-		insertPixel(frm, coord(loc.x+hueLoc, loc.y+y), rgb(255,255,255));
+		insertPixel(frm, coord(loc.x+hueLoc, loc.y+y), rgb(255,255,255,255));
 		for (x=0; x<y-44; x++) {
-			insertPixel(frm, coord(loc.x+hueLoc-x, loc.y+y), rgb(255,255,255));
-			insertPixel(frm, coord(loc.x+hueLoc+x, loc.y+y), rgb(255,255,255));
+			insertPixel(frm, coord(loc.x+hueLoc-x, loc.y+y), rgb(255,255,255,255));
+			insertPixel(frm, coord(loc.x+hueLoc+x, loc.y+y), rgb(255,255,255,255));
 		}
 	}
 	for (y=35; y<45;y++) {
-		insertPixel(frm, coord(loc.x+hueLoc, loc.y+y), rgb(0,0,0));
+		insertPixel(frm, coord(loc.x+hueLoc, loc.y+y), rgb(0,0,0,255));
 	}
 }
 
@@ -228,17 +246,17 @@ void showSlSelector(Frame* frm, Coord loc, unsigned short hue, unsigned char sat
 	
 	//get RGB from selected Hue
 	if (hue < 128) {
-		curH = rgb(255,2*hue,0);
+		curH = rgb(255,2*hue,0,255);
 	} else if (hue < 256) {
-		curH = rgb(255-(2*hue),255,0);
+		curH = rgb(255-(2*hue),255,0,255);
 	} else if (hue < 384) {
-		curH = rgb(0,255,2*hue);
+		curH = rgb(0,255,2*hue,255);
 	} else if (hue < 512) {
-		curH = rgb(0,255-(2*hue),255);
+		curH = rgb(0,255-(2*hue),255,255);
 	} else if (hue < 640) {
-		curH = rgb(2*hue,0,255);
+		curH = rgb(2*hue,0,255,255);
 	} else if (hue < 768) {
-		curH = rgb(255,0,255-(2*hue));
+		curH = rgb(255,0,255-(2*hue),255);
 	}
 	
 	//show SL selector
@@ -246,13 +264,13 @@ void showSlSelector(Frame* frm, Coord loc, unsigned short hue, unsigned char sat
 		s = (float)y/255;
 		RGB curHS = rgb(curH.r+(255-curH.r)*s, 
 						curH.g+(255-curH.g)*s, 
-						curH.b+(255-curH.b)*s
+						curH.b+(255-curH.b)*s,255
 						);
 		for ( x = 0; x < 256; x++ ) {
 			l = (float)x/255;
 			RGB curHSL = rgb(curHS.r-(curHS.r)*l, 
 							 curHS.g-(curHS.g)*l, 
-							 curHS.b-(curHS.b)*l
+							 curHS.b-(curHS.b)*l,255
 							 );
 			insertPixel(frm, coord(loc.x+x, loc.y+y), curHSL);
 		}
@@ -260,12 +278,12 @@ void showSlSelector(Frame* frm, Coord loc, unsigned short hue, unsigned char sat
 	
 	//show border
 	for (y=0; y<256; y++) {
-		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255));
-		insertPixel(frm, coord(loc.x+256, loc.y+y), rgb(255,255,255));
+		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255,255));
+		insertPixel(frm, coord(loc.x+256, loc.y+y), rgb(255,255,255,255));
 	}
 	for (x=0; x<256; x++) {
-		insertPixel(frm, coord(loc.x+x, loc.y-1), rgb(255,255,255));
-		insertPixel(frm, coord(loc.x+x, loc.y+256), rgb(255,255,255));
+		insertPixel(frm, coord(loc.x+x, loc.y-1), rgb(255,255,255,255));
+		insertPixel(frm, coord(loc.x+x, loc.y+256), rgb(255,255,255,255));
 	}
 	
 	//show selected SL
@@ -273,33 +291,33 @@ void showSlSelector(Frame* frm, Coord loc, unsigned short hue, unsigned char sat
 		for (x=0; x<10; x++) {
 			float euclidDistance = sqrt(pow(x,2)+pow(y,2));
 			if((int)euclidDistance == 9){
-				insertPixel(frm, coord(loc.x+lum-x, loc.y+sat+y), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x+lum+x, loc.y+sat+y), rgb(255,255,255));
+				insertPixel(frm, coord(loc.x+lum-x, loc.y+sat+y), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x+lum+x, loc.y+sat+y), rgb(255,255,255,255));
 			}
 			if((int)euclidDistance == 8){
-				insertPixel(frm, coord(loc.x+lum-x, loc.y+sat+y), rgb(0,0,0));
-				insertPixel(frm, coord(loc.x+lum+x, loc.y+sat+y), rgb(0,0,0));
+				insertPixel(frm, coord(loc.x+lum-x, loc.y+sat+y), rgb(0,0,0,255));
+				insertPixel(frm, coord(loc.x+lum+x, loc.y+sat+y), rgb(0,0,0,255));
 			}
 		}
 	}
 	for (y=-10; y<0;y++) {
 		for (x=0; x<10; x++) {
 			float euclidDistance = sqrt(pow(x,2)+pow(y,2));
-			insertPixel(frm, coord(loc.x+lum-2, loc.y+sat), rgb(0,0,0));
-			insertPixel(frm, coord(loc.x+lum, loc.y+sat-2), rgb(0,0,0));
-			insertPixel(frm, coord(loc.x+lum, loc.y+sat+2), rgb(0,0,0));
-			insertPixel(frm, coord(loc.x+lum+2, loc.y+sat), rgb(0,0,0));
-			insertPixel(frm, coord(loc.x+lum-3, loc.y+sat), rgb(255,255,255));
-			insertPixel(frm, coord(loc.x+lum, loc.y+sat-3), rgb(255,255,255));
-			insertPixel(frm, coord(loc.x+lum, loc.y+sat+3), rgb(255,255,255));
-			insertPixel(frm, coord(loc.x+lum+3, loc.y+sat), rgb(255,255,255));
+			insertPixel(frm, coord(loc.x+lum-2, loc.y+sat), rgb(0,0,0,255));
+			insertPixel(frm, coord(loc.x+lum, loc.y+sat-2), rgb(0,0,0,255));
+			insertPixel(frm, coord(loc.x+lum, loc.y+sat+2), rgb(0,0,0,255));
+			insertPixel(frm, coord(loc.x+lum+2, loc.y+sat), rgb(0,0,0,255));
+			insertPixel(frm, coord(loc.x+lum-3, loc.y+sat), rgb(255,255,255,255));
+			insertPixel(frm, coord(loc.x+lum, loc.y+sat-3), rgb(255,255,255,255));
+			insertPixel(frm, coord(loc.x+lum, loc.y+sat+3), rgb(255,255,255,255));
+			insertPixel(frm, coord(loc.x+lum+3, loc.y+sat), rgb(255,255,255,255));
 			if((int)euclidDistance == 9){
-				insertPixel(frm, coord(loc.x+lum-x, loc.y+sat+y), rgb(255,255,255));
-				insertPixel(frm, coord(loc.x+lum+x, loc.y+sat+y), rgb(255,255,255));
+				insertPixel(frm, coord(loc.x+lum-x, loc.y+sat+y), rgb(255,255,255,255));
+				insertPixel(frm, coord(loc.x+lum+x, loc.y+sat+y), rgb(255,255,255,255));
 			}
 			if((int)euclidDistance == 8){
-				insertPixel(frm, coord(loc.x+lum-x, loc.y+sat+y), rgb(0,0,0));
-				insertPixel(frm, coord(loc.x+lum+x, loc.y+sat+y), rgb(0,0,0));
+				insertPixel(frm, coord(loc.x+lum-x, loc.y+sat+y), rgb(0,0,0,255));
+				insertPixel(frm, coord(loc.x+lum+x, loc.y+sat+y), rgb(0,0,0,255));
 			}
 		}
 	}
@@ -315,33 +333,51 @@ void showSelectedColor(Frame* frm, Coord loc, RGB color) {
 	}
 	//show border
 	for (y=0; y<50; y++) {
-		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255));
-		insertPixel(frm, coord(loc.x+256, loc.y+y), rgb(255,255,255));
+		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255,255));
+		insertPixel(frm, coord(loc.x+256, loc.y+y), rgb(255,255,255,255));
 	}
 	for (x=0; x<256; x++) {
-		insertPixel(frm, coord(loc.x+x, loc.y-1), rgb(255,255,255));
-		insertPixel(frm, coord(loc.x+x, loc.y+50), rgb(255,255,255));
+		insertPixel(frm, coord(loc.x+x, loc.y-1), rgb(255,255,255,255));
+		insertPixel(frm, coord(loc.x+x, loc.y+50), rgb(255,255,255,255));
 	}
 }
 
 
 
 //show canvas
-void showCanvas(Frame* frm, Frame* cnvs, Coord loc) {
+void showCanvas(Frame* frm, Frame* cnvs, int width, int height, Coord loc) {
 	int x, y;
-	for (y=0; y<330;y++) {
-		for (x=0; x<487; x++) {
+	
+	for (y=0; y < height;y++) {
+		for (x=0; x < width; x++) {
 			insertPixel(frm, coord(loc.x+x, loc.y+y), cnvs->px[x][y]);
 		}
 	}
+	
 	//show border
-	for (y=0; y<330; y++) {
-		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255));
-		insertPixel(frm, coord(loc.x+487, loc.y+y), rgb(255,255,255));
+	for (y=0; y < height; y++) {
+		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255,255));
+		insertPixel(frm, coord(loc.x+width, loc.y+y), rgb(255,255,255,255));
 	}
-	for (x=0; x<487; x++) {
-		insertPixel(frm, coord(loc.x+x, loc.y-1), rgb(255,255,255));
-		insertPixel(frm, coord(loc.x+x, loc.y+330), rgb(255,255,255));
+	for (x=0; x < width; x++) {
+		insertPixel(frm, coord(loc.x+x, loc.y-1), rgb(255,255,255,255));
+		insertPixel(frm, coord(loc.x+x, loc.y+height), rgb(255,255,255,255));
+	}
+}
+
+/* Fungsi membuat garis */
+void plotLine(Frame* frm, int x0, int y0, int x1, int y1, RGB lineColor)
+{
+	int dx =  abs(x1-x0), sx = x0<x1 ? 1 : -1;
+	int dy = -abs(y1-y0), sy = y0<y1 ? 1 : -1; 
+	int err = dx+dy, e2; /* error value e_xy */
+	int loop = 1;
+	while(loop){  /* loop */
+		insertPixel(frm, coord(x0, y0), rgb(lineColor.r, lineColor.g, lineColor.b,255));
+		if (x0==x1 && y0==y1) loop = 0;
+		e2 = 2*err;
+		if (e2 >= dy) { err += dy; x0 += sx; } /* e_xy+e_x > 0 */
+		if (e2 <= dx) { err += dx; y0 += sy; } /* e_xy+e_y < 0 */
 	}
 }
 
@@ -356,7 +392,40 @@ void addBlob(Frame* cnvs, Coord loc, RGB color) {
 	}
 }
 
-
+void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX, int originY, RGB color, RGB canvasColor){
+	//static Coord prevCurrentCoord;
+	static Coord initialPosition;
+	static int isReleased = 1;
+	Coord currentPosition;
+	int x, y;
+	
+	if(mouseState && isReleased){
+		initialPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+		isReleased = 0;
+	}
+	
+	if(mouseState && !isReleased){
+		currentPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+		
+		// hide previous square lines
+		//plotLine(canvas, initialPosition.x, initialPosition.y, initialPosition.x, prevCurrentCoord.y, canvasColor);
+		//plotLine(canvas, initialPosition.x, initialPosition.y, prevCurrentCoord.x, initialPosition.y, canvasColor);
+		//plotLine(canvas, prevCurrentCoord.x, initialPosition.y, prevCurrentCoord.x, prevCurrentCoord.y, canvasColor);
+		//plotLine(canvas, initialPosition.x, prevCurrentCoord.y, prevCurrentCoord.x, prevCurrentCoord.y, canvasColor);
+		
+		// draw square lines
+		plotLine(canvas, initialPosition.x, initialPosition.y, initialPosition.x, currentPosition.y, color);
+		plotLine(canvas, initialPosition.x, initialPosition.y, currentPosition.x, initialPosition.y, color);
+		plotLine(canvas, currentPosition.x, initialPosition.y, currentPosition.x, currentPosition.y, color);
+		plotLine(canvas, initialPosition.x, currentPosition.y, currentPosition.x, currentPosition.y, color);
+		
+		//prevCurrentCoord = currentPosition;
+	}
+	
+	if(!mouseState && !isReleased){
+		isReleased = 1;
+	}
+}
 
 //get RGB from HSL
 RGB getColorValue(unsigned short hue, unsigned char saturation, unsigned char luminosity){
@@ -365,29 +434,29 @@ RGB getColorValue(unsigned short hue, unsigned char saturation, unsigned char lu
 	
 	//get RGB from selected Hue
 	if (hue < 128) {
-		curH = rgb(255,2*hue,0);
+		curH = rgb(255,2*hue,0,255);
 	} else if (hue < 256) {
-		curH = rgb(255-(2*hue),255,0);
+		curH = rgb(255-(2*hue),255,0,255);
 	} else if (hue < 384) {
-		curH = rgb(0,255,2*hue);
+		curH = rgb(0,255,2*hue,255);
 	} else if (hue < 512) {
-		curH = rgb(0,255-(2*hue),255);
+		curH = rgb(0,255-(2*hue),255,255);
 	} else if (hue < 640) {
-		curH = rgb(2*hue,0,255);
+		curH = rgb(2*hue,0,255,255);
 	} else if (hue < 768) {
-		curH = rgb(255,0,255-(2*hue));
+		curH = rgb(255,0,255-(2*hue),255);
 	}
 	
 	//show RGB from SL selector
 	s = (float)saturation/255;
 	RGB curHS = rgb(curH.r+(255-curH.r)*s, 
 					curH.g+(255-curH.g)*s, 
-					curH.b+(255-curH.b)*s
+					curH.b+(255-curH.b)*s,255
 					);
 	l = (float)luminosity/255;
 	RGB curHSL = rgb(curHS.r-(curHS.r)*l, 
 					 curHS.g-(curHS.g)*l, 
-					 curHS.b-(curHS.b)*l
+					 curHS.b-(curHS.b)*l,255
 					 );
 	
 	return curHSL;
@@ -415,7 +484,7 @@ void showFrame (Frame* frm, FrameBuffer* fb) {
 			*(fb->ptr + location    ) = frm->px[x][y].b; // blue
 			*(fb->ptr + location + 1) = frm->px[x][y].g; // green
 			*(fb->ptr + location + 2) = frm->px[x][y].r; // red
-			*(fb->ptr + location + 3) = 255; // transparency
+			*(fb->ptr + location + 3) = frm->px[x][y].a; // transparency
 		}
 	}
 }
@@ -468,8 +537,16 @@ int main() {
 	//prepare environment controller
 	unsigned char loop = 1; // frame loop controller
 	Frame cFrame; // composition frame (Video RAM)
+	createPixelsArray(&cFrame);
+	
 	Frame canvas; // persistence canvas frame
-	flushFrame(&canvas, rgb(255,255,255)); // prepare canvas
+	createPixelsArray(&canvas);
+	flushFrame(&canvas, rgb(255,255,255,255)); // prepare canvas
+	
+	Frame drawingCanvas;
+	createPixelsArray(&drawingCanvas);
+	flushFrame(&drawingCanvas, rgb(255,255,255,0));
+
 	unsigned short hue = 0; //the hue location, 0..768
 	unsigned char sat = 0; //saturation, 0..255
 	unsigned char lum = 0; //luminosity, 0..255
@@ -483,8 +560,7 @@ int main() {
 		colorValue = getColorValue(hue, sat, lum);
 		
 		//clean
-		flushFrame(&cFrame, rgb(0,0,0));
-		
+		flushFrame(&cFrame, rgb(0,0,0,255));
 		
 		//hue selector
 		showHueSelector(&cFrame, coord(299,50), hue);
@@ -496,9 +572,8 @@ int main() {
 		showSelectedColor(&cFrame, coord(299,400), colorValue);
 		
 		//show canvas
-		showCanvas(&cFrame, &canvas, coord(580,120));
+		showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
 		
-
 		//fill mouse LAST
 		insertSprite(&cFrame, getCursorCoord(&mouse), 1);
 		
@@ -527,13 +602,19 @@ int main() {
 			}
 			
 			//in canvas
-			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,450))) {
+			/*if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
 				trigonoLen = sqrt((float)pow(mouseRaw[1],2)+(float)pow(mouseRaw[2],2));
 				for (i=0; i<=trigonoLen; i++) {
 					addBlob(&canvas, coord(getCursorCoord(&mouse).x-580-(mouseRaw[1]*i/trigonoLen), getCursorCoord(&mouse).y-120+(mouseRaw[2]*i/trigonoLen)), colorValue);
 				}
-			}
+			}*/
+		}		
+		
+		if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+			drawSquare(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
 		}
+		
+		
 	}
 
 	/* Cleanup --------------------------------------------------------- */
