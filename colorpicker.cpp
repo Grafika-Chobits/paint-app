@@ -350,18 +350,24 @@ void showCanvas(Frame* frm, Frame* cnvs, int width, int height, Coord loc) {
 	
 	for (y=0; y < height;y++) {
 		for (x=0; x < width; x++) {
-			insertPixel(frm, coord(loc.x+x, loc.y+y), cnvs->px[x][y]);
+			if(cnvs->px[x][y].a != 0){
+				insertPixel(frm, coord(loc.x+x, loc.y+y), cnvs->px[x][y]);
+			}
 		}
 	}
 	
 	//show border
 	for (y=0; y < height; y++) {
-		insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255,255));
-		insertPixel(frm, coord(loc.x+width, loc.y+y), rgb(255,255,255,255));
+		if(cnvs->px[x][y].a != 0){
+			insertPixel(frm, coord(loc.x-1, loc.y+y), rgb(255,255,255,255));
+			insertPixel(frm, coord(loc.x+width, loc.y+y), rgb(255,255,255,255));
+		}
 	}
 	for (x=0; x < width; x++) {
-		insertPixel(frm, coord(loc.x+x, loc.y-1), rgb(255,255,255,255));
-		insertPixel(frm, coord(loc.x+x, loc.y+height), rgb(255,255,255,255));
+		if(cnvs->px[x][y].a != 0){
+			insertPixel(frm, coord(loc.x+x, loc.y-1), rgb(255,255,255,255));
+			insertPixel(frm, coord(loc.x+x, loc.y+height), rgb(255,255,255,255));
+		}
 	}
 }
 
@@ -393,7 +399,6 @@ void addBlob(Frame* cnvs, Coord loc, RGB color) {
 }
 
 void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX, int originY, RGB color, RGB canvasColor){
-	//static Coord prevCurrentCoord;
 	static Coord initialPosition;
 	static int isReleased = 1;
 	Coord currentPosition;
@@ -407,23 +412,22 @@ void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX,
 	if(mouseState && !isReleased){
 		currentPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
 		
-		// hide previous square lines
-		//plotLine(canvas, initialPosition.x, initialPosition.y, initialPosition.x, prevCurrentCoord.y, canvasColor);
-		//plotLine(canvas, initialPosition.x, initialPosition.y, prevCurrentCoord.x, initialPosition.y, canvasColor);
-		//plotLine(canvas, prevCurrentCoord.x, initialPosition.y, prevCurrentCoord.x, prevCurrentCoord.y, canvasColor);
-		//plotLine(canvas, initialPosition.x, prevCurrentCoord.y, prevCurrentCoord.x, prevCurrentCoord.y, canvasColor);
-		
 		// draw square lines
 		plotLine(canvas, initialPosition.x, initialPosition.y, initialPosition.x, currentPosition.y, color);
 		plotLine(canvas, initialPosition.x, initialPosition.y, currentPosition.x, initialPosition.y, color);
 		plotLine(canvas, currentPosition.x, initialPosition.y, currentPosition.x, currentPosition.y, color);
 		plotLine(canvas, initialPosition.x, currentPosition.y, currentPosition.x, currentPosition.y, color);
-		
-		//prevCurrentCoord = currentPosition;
 	}
 	
 	if(!mouseState && !isReleased){
 		isReleased = 1;
+		currentPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+		printf("released\n");
+		// draw square lines
+		plotLine(canvas, initialPosition.x, initialPosition.y, initialPosition.x, currentPosition.y, color);
+		plotLine(canvas, initialPosition.x, initialPosition.y, currentPosition.x, initialPosition.y, color);
+		plotLine(canvas, currentPosition.x, initialPosition.y, currentPosition.x, currentPosition.y, color);
+		plotLine(canvas, initialPosition.x, currentPosition.y, currentPosition.x, currentPosition.y, color);
 	}
 }
 
@@ -574,6 +578,19 @@ int main() {
 		//show canvas
 		showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
 		
+		if((mouseRaw[0]&1)){
+			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+				flushFrame(&drawingCanvas, rgb(255,255,255,0));
+				drawSquare(&drawingCanvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
+				showCanvas(&cFrame, &drawingCanvas, 487, 500, coord(580,120));
+			}
+		}else{
+			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+				drawSquare(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
+				showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
+			}
+		}
+		
 		//fill mouse LAST
 		insertSprite(&cFrame, getCursorCoord(&mouse), 1);
 		
@@ -602,17 +619,15 @@ int main() {
 			}
 			
 			//in canvas
-			/*if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
 				trigonoLen = sqrt((float)pow(mouseRaw[1],2)+(float)pow(mouseRaw[2],2));
 				for (i=0; i<=trigonoLen; i++) {
 					addBlob(&canvas, coord(getCursorCoord(&mouse).x-580-(mouseRaw[1]*i/trigonoLen), getCursorCoord(&mouse).y-120+(mouseRaw[2]*i/trigonoLen)), colorValue);
 				}
-			}*/
+			}
 		}		
 		
-		if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
-			drawSquare(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
-		}
+		
 		
 		
 	}
