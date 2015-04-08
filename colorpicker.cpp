@@ -418,6 +418,33 @@ void addBlob(Frame* cnvs, Coord loc, RGB color) {
 	}
 }
 
+void drawLine(Frame* canvas, Coord mousePosition, int originX, int originY, RGB color, RGB canvasColor){
+	static Coord initialPosition;
+	static int isInitiated = 0;
+	static int secondClick = 0;
+	Coord currentPosition;
+	int x, y;
+	
+	
+	if(isInitiated && !secondClick ){
+		currentPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+		isInitiated = 0;
+		secondClick = 1;
+		
+		// draw line
+		plotLine(canvas, initialPosition.x, initialPosition.y, currentPosition.x, currentPosition.y, color);
+		printf("2ndclick");
+	}
+
+	if(!isInitiated && secondClick){
+		initialPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+		isInitiated = 1;
+		secondClick = 0;
+		printf("1stclick");
+	}
+	
+	}
+	
 void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX, int originY, RGB color, RGB canvasColor){
 	static Coord initialPosition;
 	static int isReleased = 1;
@@ -604,7 +631,10 @@ int main() {
 			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
 				flushFrame(&drawingCanvas, rgb(255,255,255,0));
 				drawSquare(&drawingCanvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
+				//drawLine(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), 580, 120, colorValue, rgb(255,255,255,255));				
 				showCanvas(&cFrame, &drawingCanvas, 487, 500, coord(580,120));
+				//showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
+
 			}
 		}else{
 			if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
