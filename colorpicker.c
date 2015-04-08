@@ -485,7 +485,6 @@ int main() {
 		//clean
 		flushFrame(&cFrame, rgb(0,0,0));
 		
-		
 		//hue selector
 		showHueSelector(&cFrame, coord(299,50), hue);
 			
@@ -498,7 +497,6 @@ int main() {
 		//show canvas
 		showCanvas(&cFrame, &canvas, coord(580,120));
 		
-
 		//fill mouse LAST
 		insertSprite(&cFrame, getCursorCoord(&mouse), 1);
 		
