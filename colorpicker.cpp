@@ -539,7 +539,7 @@ void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX,
 		plotLine(canvas, currentPosition.x, initialPosition.y, currentPosition.x, currentPosition.y, color);
 		plotLine(canvas, initialPosition.x, currentPosition.y, currentPosition.x, currentPosition.y, color);
 		
-		//colorFlood(canvas, (currentPosition.x - initialPosition.x) / 2, (currentPosition.y - initialPosition.y) / 2, color);
+		colorFlood(canvas, (currentPosition.x + initialPosition.x) / 2, (currentPosition.y + initialPosition.y) / 2, color);
 	}
 }
 
