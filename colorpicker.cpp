@@ -444,6 +444,7 @@ void drawLine(Frame* canvas, Coord mousePosition, int originX, int originY, RGB 
 	}
 }
 	
+// Plot Circle
 void plotCircle(Frame* frm,int xm, int ym, int r,RGB col)
 {
    int x = -r, y = 0, err = 2-2*r; /* II. Quadrant */ 
@@ -458,6 +459,7 @@ void plotCircle(Frame* frm,int xm, int ym, int r,RGB col)
    } while (x < 0);
 }
 
+//Draw Button
 void drawButton(Frame* canvas, int originX, int originY, int code, RGB color)
 {	
 	int left = originX;
@@ -508,6 +510,7 @@ void drawButton(Frame* canvas, int originX, int originY, int code, RGB color)
 	}
 }
 
+//Draw Square
 void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX, int originY, RGB color, RGB canvasColor){
 	static Coord initialPosition;
 	static int isReleased = 1;
@@ -543,6 +546,40 @@ void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX,
 	}
 }
 
+//Draw Circle
+void drawCircle(Frame* canvas, Coord mousePosition, int mouseState, int originX, int originY, RGB color, RGB canvasColor){
+	static Coord initialPosition;
+	static int isReleased = 1;
+	Coord currentPosition;
+	int x, y;
+	int len;
+	
+	if(mouseState && isReleased){
+		initialPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+		isReleased = 0;
+	}
+	
+	if(mouseState && !isReleased){
+		currentPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+		len = sqrt(pow(abs(initialPosition.x - currentPosition.x),2)+pow(abs(initialPosition.y - currentPosition.y),2));
+		//len = coord(abs(initialPosition.x - currentPosition.x), abs(initialPosition.y - currentPosition.y));
+		
+		plotCircle(canvas, initialPosition.x, initialPosition.y, len, color);
+	}
+	
+	if(!mouseState && !isReleased){
+		isReleased = 1;
+		currentPosition = coord(mousePosition.x - originX, mousePosition.y - originY);
+		len = sqrt(pow(abs(initialPosition.x - currentPosition.x),2)+pow(abs(initialPosition.y - currentPosition.y),2));
+		//len = coord(abs(initialPosition.x - currentPosition.x), abs(initialPosition.y - currentPosition.y));
+		
+		plotCircle(canvas, initialPosition.x, initialPosition.y, len, color);
+		
+		//colorFlood(canvas, (currentPosition.x - initialPosition.x) / 2, (currentPosition.y - initialPosition.y) / 2, color);
+	}
+}
+
+//Draw Polygon
 void drawPolygon(Frame* canvas, vector<Coord> vertex, int originX, int originY, RGB color) {
 	for(int i=0;i<vertex.size();++i) {
 		if(i==(vertex.size()-1))
@@ -649,6 +686,12 @@ void *threadFuncKeyboard(void *arg)
 		if(c == 51){
 			tool = 3;
 		}		
+		if(c == 52){
+			tool = 4;
+		}	
+		if(c == 53){
+			tool = 5;
+		}	
     }
 
     resetTermios();
@@ -811,6 +854,20 @@ int main() {
 					}
 				}
 				break;
+			case 5:
+				if((mouseRaw[0]&1)){
+					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+						flushFrame(&drawingCanvas, rgb(255,255,255,0));
+						drawCircle(&drawingCanvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));		
+						showCanvas(&cFrame, &drawingCanvas, 487, 500, coord(580,120));
+					}
+				}else{
+					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
+						drawCircle(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), mouseRaw[0]&1, 580, 120, colorValue, rgb(255,255,255,255));
+						showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
+					}
+				}
+				break;
 		}
 		
 		//fill mouse LAST
@@ -830,14 +887,12 @@ int main() {
 			//in hue selector
 			if (isInBound(getCursorCoord(&mouse),coord(299,50), coord(1066,100))) {
 				hue = getCursorCoord(&mouse).x-299;
-				printf("r: %d, g: %d, b: %d\n", colorValue.r, colorValue.g, colorValue.b);
 			}
 			
 			//in sl selector
 			if (isInBound(getCursorCoord(&mouse),coord(299,120), coord(555,376))) {
 				sat = getCursorCoord(&mouse).y-120;
 				lum = getCursorCoord(&mouse).x-299;
-				printf("r: %d, g: %d, b: %d\n", colorValue.r, colorValue.g, colorValue.b);
 			}
 		}		
 	}
