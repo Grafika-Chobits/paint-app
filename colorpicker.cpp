@@ -490,9 +490,9 @@ void drawButton(Frame* canvas, int originX, int originY, int code, RGB color)
 	
 	else if(code == 3)
 	{
-		plotLine(canvas, left + 5, top + 5, left + 5, bottom - 5, rgb(0,0,0,0));
-		plotLine(canvas, left + 5, bottom - 5, right - 5, bottom - 5, rgb(0,0,0,0));
-		plotLine(canvas, left + 5, top + 5, right - 5, bottom - 5, rgb(0,0,0,0));
+		plotLine(canvas, left + 10, top + 5, left + 10, bottom - 5, rgb(0,0,0,0));
+		plotLine(canvas, left + 10, top + 5, right - 10, top + 5, rgb(0,0,0,0));
+		plotLine(canvas, left + 10, centerY - 3, right - 10, centerY -3, rgb(0,0,0,0));
 	}
 	
 	else if(code == 4)
