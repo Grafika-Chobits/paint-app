@@ -9,7 +9,7 @@ CFLAGS  = -g
 # the build target executable:
 TARGET = main
 
-$(TARGET): map.cpp
+$(TARGET): colorpicker.cpp
 	$(CC) -o $(TARGET) colorpicker.cpp -lpthread
 	./$(TARGET)
 
