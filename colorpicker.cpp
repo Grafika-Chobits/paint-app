@@ -444,6 +444,70 @@ void drawLine(Frame* canvas, Coord mousePosition, int originX, int originY, RGB 
 	}
 }
 	
+void plotCircle(Frame* frm,int xm, int ym, int r,RGB col)
+{
+   int x = -r, y = 0, err = 2-2*r; /* II. Quadrant */ 
+   do {
+      insertPixel(frm,coord(xm-x, ym+y),col); /*   I. Quadrant */
+      insertPixel(frm,coord(xm-y, ym-x),col); /*  II. Quadrant */
+      insertPixel(frm,coord(xm+x, ym-y),col); /* III. Quadrant */
+      insertPixel(frm,coord(xm+y, ym+x),col); /*  IV. Quadrant */
+      r = err;
+      if (r <= y) err += ++y*2+1;           /* e_xy+e_y < 0 */
+      if (r > x || err > y) err += ++x*2+1; /* e_xy+e_x > 0 or no 2nd y-step */
+   } while (x < 0);
+}
+
+void drawButton(Frame* canvas, int originX, int originY, int code, RGB color)
+{	
+	int left = originX;
+	int right = originX + 30;
+	int top = originY;
+	int bottom = originY + 30;
+	int centerX = originX + 15;
+	int centerY = originY + 15;
+	
+	plotLine(canvas, left, top, right, top, color);
+	plotLine(canvas, right, top, right, bottom, color);
+	plotLine(canvas, right, bottom, left, bottom, color);
+	plotLine(canvas, left, bottom, left, top, color);
+	colorFlood(canvas, originX + 1, originY + 1, color);
+	
+	if(code == 1)
+	{
+		plotLine(canvas, left + 5, top + 5, right - 5, bottom - 5, rgb(0,0,0,0));
+	}
+	
+	else if(code == 2)
+	{
+		plotLine(canvas, left + 5, top + 5, right - 5, top + 5, rgb(0,0,0,0));
+		plotLine(canvas, right - 5, top + 5, right - 5, bottom - 5, rgb(0,0,0,0));
+		plotLine(canvas, right - 5, bottom - 5, left + 5, bottom - 5, rgb(0,0,0,0));
+		plotLine(canvas, left + 5, bottom - 5, left + 5, top + 5, rgb(0,0,0,0));
+	}
+	
+	else if(code == 3)
+	{
+		plotLine(canvas, left + 5, top + 5, left + 5, bottom - 5, rgb(0,0,0,0));
+		plotLine(canvas, left + 5, bottom - 5, right - 5, bottom - 5, rgb(0,0,0,0));
+		plotLine(canvas, left + 5, top + 5, right - 5, bottom - 5, rgb(0,0,0,0));
+	}
+	
+	else if(code == 4)
+	{
+		plotLine(canvas, left + 5, top + 10, centerX, top + 5, rgb(0,0,0,0));
+		plotLine(canvas, centerX, top + 5, right - 5, top + 10, rgb(0,0,0,0));
+		plotLine(canvas, right - 5, top + 10, right - 10, bottom - 5, rgb(0,0,0,0));
+		plotLine(canvas, right - 10, bottom - 5, left +10 , bottom - 5, rgb(0,0,0,0));
+		plotLine(canvas, left +10 , bottom - 5, left + 5, top + 10, rgb(0,0,0,0));
+	}
+	
+	else if(code == 5)
+	{
+		plotCircle(canvas, centerX, centerY, 10, rgb(0,0,0,0));
+	}
+}
+
 void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX, int originY, RGB color, RGB canvasColor){
 	static Coord initialPosition;
 	static int isReleased = 1;
@@ -819,6 +883,15 @@ int main() {
 		
 		//show canvas
 		showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
+		
+		//Draw button, koordinat = titik kiri atas, sisi = 30
+		int left = 310;
+		drawButton(&cFrame, left, 		470, 1, rgb(255,255,255,255));
+		//drawLine(
+		drawButton(&cFrame, left + 50, 	470, 2, rgb(255,255,255,255));
+		drawButton(&cFrame, left + 100, 470, 3, rgb(255,255,255,255));
+		drawButton(&cFrame, left + 150, 470, 4, rgb(255,255,255,255));
+		drawButton(&cFrame, left + 200, 470, 5, rgb(255,255,255,255));
 		
 		switch(tool){
 			case 1:
