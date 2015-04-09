@@ -11,10 +11,10 @@ TARGET = main
 
 $(TARGET): colorpicker.cpp
 	$(CC) -o $(TARGET) colorpicker.cpp -lpthread
-	./$(TARGET)
+	sudo ./$(TARGET)
 
 clean:
 	$(RM) $(TARGET) 
 	
 run:
-	./$(TARGET)
+	sudo ./$(TARGET)
