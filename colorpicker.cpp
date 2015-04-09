@@ -464,6 +464,8 @@ void drawButton(Frame* canvas, int originX, int originY, int code, RGB color)
 	int right = originX + 30;
 	int top = originY;
 	int bottom = originY + 30;
+	int centerX = originX + 15;
+	int centerY = originY + 15;
 	
 	plotLine(canvas, left, top, right, top, color);
 	plotLine(canvas, right, top, right, bottom, color);
@@ -493,13 +495,16 @@ void drawButton(Frame* canvas, int originX, int originY, int code, RGB color)
 	
 	else if(code == 4)
 	{
-		int centerX = originX + 15;
-		int centerY = originY + 15;
 		plotLine(canvas, left + 5, top + 10, centerX, top + 5, rgb(0,0,0,0));
 		plotLine(canvas, centerX, top + 5, right - 5, top + 10, rgb(0,0,0,0));
 		plotLine(canvas, right - 5, top + 10, right - 10, bottom - 5, rgb(0,0,0,0));
 		plotLine(canvas, right - 10, bottom - 5, left +10 , bottom - 5, rgb(0,0,0,0));
 		plotLine(canvas, left +10 , bottom - 5, left + 5, top + 10, rgb(0,0,0,0));
+	}
+	
+	else if(code == 5)
+	{
+		plotCircle(canvas, centerX, centerY, 10, rgb(0,0,0,0));
 	}
 }
 
@@ -748,7 +753,7 @@ int main() {
 		drawButton(&cFrame, left + 50, 	470, 2, rgb(255,255,255,255));
 		drawButton(&cFrame, left + 100, 470, 3, rgb(255,255,255,255));
 		drawButton(&cFrame, left + 150, 470, 4, rgb(255,255,255,255));
-		drawButton(&cFrame, left + 200, 470, 1, rgb(255,255,255,255));
+		drawButton(&cFrame, left + 200, 470, 5, rgb(255,255,255,255));
 		
 		switch(tool){
 			case 1:
