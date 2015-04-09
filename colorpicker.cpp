@@ -747,16 +747,24 @@ int main() {
 		showCanvas(&cFrame, &canvas, 487, 500, coord(580,120));
 		
 		//Draw button, koordinat = titik kiri atas, sisi = 30
-		int left = 310;
-		drawButton(&cFrame, left, 		470, 1, rgb(255,255,255,255));
-		//drawLine(
-		drawButton(&cFrame, left + 50, 	470, 2, rgb(255,255,255,255));
-		drawButton(&cFrame, left + 100, 470, 3, rgb(255,255,255,255));
-		drawButton(&cFrame, left + 150, 470, 4, rgb(255,255,255,255));
-		drawButton(&cFrame, left + 200, 470, 5, rgb(255,255,255,255));
+		int buttonLeft = 310;
+		int buttonRight = 340;
+		int buttonUp = 470;
+		int buttonBottom = 500;
+		int LINE = 1;
+		int SQUARE = 2;
+		int FREEHAND = 3;
+		int POLYGON = 4;
+		int CIRCLE = 5;
+		
+		drawButton(&cFrame, buttonLeft, 		buttonUp, LINE, rgb(255,255,255,255));
+		drawButton(&cFrame, buttonLeft + 50, 	buttonUp, SQUARE, rgb(255,255,255,255));
+		drawButton(&cFrame, buttonLeft + 100, 	buttonUp, POLYGON, rgb(255,255,255,255));
+		drawButton(&cFrame, buttonLeft + 150, 	buttonUp, FREEHAND, rgb(255,255,255,255));
+		drawButton(&cFrame, buttonLeft + 200, 	buttonUp, CIRCLE, rgb(255,255,255,255));
 		
 		switch(tool){
-			case 1:
+			case 1: //LINE
 				if((mouseRaw[0]&1)){
 					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
 						drawLine(&canvas, coord(getCursorCoord(&mouse).x, getCursorCoord(&mouse).y), 580, 120, colorValue, rgb(255,255,255,255));				
@@ -765,7 +773,7 @@ int main() {
 				}
 				break;
 			
-			case 2:
+			case 2: //square
 				if((mouseRaw[0]&1)){
 					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
 						flushFrame(&drawingCanvas, rgb(255,255,255,0));
@@ -779,7 +787,7 @@ int main() {
 					}
 				}
 				break;
-			case 3:
+			case 3: //poly
 				{	
 					if(mouseRaw[0]&1) {
 						if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
@@ -801,7 +809,7 @@ int main() {
 					
 				}
 				break;
-			case 4:
+			case 4: //freehand
 				if((mouseRaw[0]&1)){
 					if (isInBound(getCursorCoord(&mouse),coord(580,120), coord(1067,620))) {
 						trigonoLen = sqrt((float)pow(mouseRaw[1],2)+(float)pow(mouseRaw[2],2));
@@ -838,6 +846,27 @@ int main() {
 				sat = getCursorCoord(&mouse).y-120;
 				lum = getCursorCoord(&mouse).x-299;
 				printf("r: %d, g: %d, b: %d\n", colorValue.r, colorValue.g, colorValue.b);
+			}
+			
+			if (isInBound(getCursorCoord(&mouse),coord(buttonLeft,buttonUp), coord(buttonLeft + 30,buttonBottom)))
+			{
+				tool = 1;
+			}
+			if (isInBound(getCursorCoord(&mouse),coord(buttonLeft + 50,buttonUp), coord(buttonLeft + 80,buttonBottom)))
+			{
+				tool = 2;
+			}
+			if (isInBound(getCursorCoord(&mouse),coord(buttonLeft + 100,buttonUp), coord(buttonLeft + 130,buttonBottom)))
+			{
+				tool = 3;
+			}
+			if (isInBound(getCursorCoord(&mouse),coord(buttonLeft + 150,buttonUp), coord(buttonLeft + 180,buttonBottom)))
+			{
+				tool = 4;
+			}
+			if (isInBound(getCursorCoord(&mouse),coord(buttonLeft + 200,buttonUp), coord(buttonLeft + 230,buttonBottom)))
+			{
+				tool = 5;
 			}
 		}		
 	}
