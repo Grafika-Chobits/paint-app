@@ -543,6 +543,142 @@ void drawSquare(Frame* canvas, Coord mousePosition, int mouseState, int originX,
 	}
 }
 
+/* FUNCTIONS FOR SCANLINE ALGORITHM ---------------------------------------------------- */
+
+bool isSlopeEqualsZero(int y0, int y1){
+	if(y0 == y1){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+bool isInBetween(int y0, int y1, int yTest){
+	if((yTest >= y0 && yTest <= y1 || yTest >= y1 && yTest <= y0) && !isSlopeEqualsZero(y0, y1)){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/* Function to calculate intersection between line (a,b) and line with slope 0 */
+Coord intersection(Coord a, Coord b, int y){
+	int x;
+	double slope;
+	
+	if(b.x == a.x){
+		x = a.x;
+	}else{
+		slope = (double)(b.y - a.y) / (double)(b.x - a.x);
+		x = round(((double)(y - a.y) / slope) + (double)a.x);
+	}
+	
+	return coord(x, y);
+}
+
+bool compareByAxis(const s_coord &a, const s_coord &b){
+	return a.x <= b.x;
+}
+
+bool compareSameAxis(const s_coord &a, const s_coord &b){
+	return a.x == b.x;
+}
+
+bool operator==(const Coord& lhs, const Coord& rhs) {
+	if(lhs.x==rhs.x && lhs.y==rhs.y)
+		return true;
+	return false;
+}
+
+bool isLocalMaxima(const Coord& a, const Coord& b, const Coord& titikPotong) {
+	return ((titikPotong.y<a.y && titikPotong.y<b.y) || (titikPotong.y>a.y && titikPotong.y>b.y));
+}
+
+vector<Coord> intersectionGenerator(int y, vector<Coord> polygon){
+	vector<Coord> intersectionPoint;
+	Coord prevTipot = coord(-9999,-9999);
+	for(int i = 0; i < polygon.size(); i++){
+		if(i == polygon.size() - 1){
+			if(isInBetween(polygon.at(i).y, polygon.at(0).y, y)){				
+				Coord a = coord(polygon.at(i).x, polygon.at(i).y);
+				Coord b = coord(polygon.at(0).x, polygon.at(0).y);
+						
+				Coord titikPotong = intersection(a, b, y);
+
+				if(titikPotong==b){
+					if(isLocalMaxima(polygon.at(i), polygon.at(1), titikPotong))
+						intersectionPoint.push_back(titikPotong);
+				}
+				else {
+					if(prevTipot==titikPotong){
+						if(isLocalMaxima(polygon.at(i-1), polygon.at(0), titikPotong))
+							intersectionPoint.push_back(titikPotong);
+					}
+					else
+						intersectionPoint.push_back(titikPotong);
+				}
+			}
+		}else{
+			if(isInBetween(polygon.at(i).y, polygon.at(i + 1).y, y)){
+				Coord a = coord(polygon.at(i).x, polygon.at(i).y);
+				Coord b = coord(polygon.at(i + 1).x, polygon.at(i + 1).y);
+				
+				Coord titikPotong = intersection(a, b, y);
+
+				// Jika sama dgn tipot sebelumnya, cek apakah local minima/maxima
+				if(titikPotong==prevTipot) {
+					Coord z = coord(polygon.at(i-1).x, polygon.at(i-1).y);
+					if(isLocalMaxima(z, b, titikPotong)) {
+						intersectionPoint.push_back(titikPotong);
+					}
+				}
+				else {
+					intersectionPoint.push_back(titikPotong);
+				}
+				prevTipot = intersectionPoint.back();
+			}
+		}
+	}
+	
+	sort(intersectionPoint.begin(), intersectionPoint.end(), compareByAxis);
+	
+	return intersectionPoint;
+}
+vector<Coord> combineIntersection(vector<Coord> a, vector<Coord> b){
+	for(int i = 0; i < b.size(); i++){
+		a.push_back(b.at(i));
+	}
+	
+	sort(a.begin(), a.end(), compareByAxis);
+	
+	return a;
+}
+
+void scanlineFill(Frame *canvas, vector<Coord> vertex, RGB color) {
+	for(int i = 1; i <= screenY; i++){
+		cout<< "tes" << endl;
+		vector<Coord> shapeIntersectionPoint = intersectionGenerator(i, vertex);
+
+		// if(shapeIntersectionPoint.size() % 2 != 0){
+		// 	unique(shapeIntersectionPoint.begin(), shapeIntersectionPoint.end(), compareSameAxis);
+		// 	shapeIntersectionPoint.erase(shapeIntersectionPoint.end() - 1);
+		// }
+		
+		int shapeSize = shapeIntersectionPoint.size()-1;
+		
+		for(int j = 0; j<shapeSize; j++){
+			if(j % 2 == 0){
+				int x0 = shapeIntersectionPoint.at(j).x-580;
+				int y0 = shapeIntersectionPoint.at(j).y-120;
+				int x1 = shapeIntersectionPoint.at(j + 1).x-580;
+				int y1 = shapeIntersectionPoint.at(j + 1).y-120;
+				
+				plotLine(canvas, x0, y0, x1, y1, color);
+			}
+		}		
+	}	
+}
+
 void drawPolygon(Frame* canvas, vector<Coord> vertex, int originX, int originY, RGB color) {
 	for(int i=0;i<vertex.size();++i) {
 		if(i==(vertex.size()-1))
@@ -550,6 +686,8 @@ void drawPolygon(Frame* canvas, vector<Coord> vertex, int originX, int originY, 
 		else
 			plotLine(canvas, vertex.at(i).x-originX, vertex.at(i).y-originY, vertex.at(i+1).x-originX, vertex.at(i+1).y-originY, color);	
 	}
+
+	scanlineFill(canvas, vertex, color);
 }
 
 //get RGB from HSL
